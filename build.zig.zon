@@ -1,0 +1,29 @@
+.{
+    .name = .centipede,
+    .version = "0.0.0",
+    .fingerprint = 0xdd9ef8602256b006, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .raylib_zig = .{
+            .url = "git+https://github.com/raylib-zig/raylib-zig?ref=devel#58f3c0fa328fc9ff48d17c2c3771ab9c5114aaa6",
+            .hash = "raylib_zig-6.0.0-KE8REMNkBQCpxwqT9ubVNf5aEOcWRUVIaH2sgt_sDDoZ",
+        },
+        .zclay = .{
+            .url = "git+https://github.com/johan0A/clay-zig-bindings#e0286c488a303b93501944ccde10730cc74ecd58",
+            .hash = "zclay-0.2.2-Ej1rkP3RAACYZGzQB5NGPaqfySgKfO26NYk5Ja6Z15gC",
+        },
+        .emsdk = .{
+            .url = "git+https://github.com/emscripten-core/emsdk?ref=4.0.9#3bcf1dcd01f040f370e10fe673a092d9ed79ebb5",
+            .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
+        },
+        .box2d_zig = .{
+            .url = "git+https://github.com/fish1/box2d-zig#c4e399fa936fdc397174554e168042463b485f72",
+            .hash = "box2d_zig-0.0.0-B_mA0owZAAAk2NewcIApGvVNllbk5gYIozBXLvmI6GSs",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

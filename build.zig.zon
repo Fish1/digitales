@@ -20,6 +20,10 @@
             .url = "git+https://github.com/fish1/box2d-zig#c4e399fa936fdc397174554e168042463b485f72",
             .hash = "box2d_zig-0.0.0-B_mA0owZAAAk2NewcIApGvVNllbk5gYIozBXLvmI6GSs",
         },
+        .zflecs = .{
+            .url = "git+https://github.com/zig-gamedev/zflecs#9c2771cf0cae508db622821bb7deac6e9370a9de",
+            .hash = "zflecs-0.2.0-dev-1PN3yvUPQQBUdlukoUPPTpW5NLhkagNIEtOq0C0S3bmf",
+        },
     },
     .paths = .{
         "build.zig",

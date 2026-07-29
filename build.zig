@@ -24,6 +24,10 @@ pub fn build(b: *std.Build) !void {
     });
     const box2d_module = box2d_dep.module("box2d");
 
+    const zflecs_dep = b.dependency("zflecs", .{});
+    const zflecs_module = zflecs_dep.module("root");
+    const zflecs_artifact = zflecs_dep.artifact("flecs");
+
     const root_module = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
@@ -32,6 +36,7 @@ pub fn build(b: *std.Build) !void {
 
     root_module.addImport("raylib", raylib_module);
     root_module.addImport("box2d", box2d_module);
+    root_module.addImport("zflecs", zflecs_module);
 
     if (target.result.cpu.arch.isWasm()) {
         const wasm = b.addLibrary(.{
@@ -56,6 +61,14 @@ pub fn build(b: *std.Build) !void {
             .install_dir = install_dir,
         });
         b.getInstallStep().dependOn(emcc_step);
+
+        const emcc_zflecs_step = emsdk.emccStep(b, zflecs_artifact, wasm, .{
+            .optimize = optimize,
+            .flags = emcc_flags,
+            .settings = emcc_settings,
+            .install_dir = install_dir,
+        });
+        b.getInstallStep().dependOn(emcc_zflecs_step);
 
         const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
         const emrun_step = emsdk.emrunStep(

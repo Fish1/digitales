@@ -1,6 +1,7 @@
 const std = @import("std");
 const raylib = @import("raylib");
 const builtin = @import("builtin");
+const logic = @import("game/logic.zig");
 
 pub const is_web = builtin.cpu.arch.isWasm();
 
@@ -19,7 +20,9 @@ const title = "Raylib Game!";
 
 pub fn web_main() !void {
     raylib.initWindow(screen_width, screen_height, title);
-    std.os.emscripten.emscripten_set_main_loop(frame, target_fps, 0);
+    logic.init() catch unreachable;
+    defer logic.deinit() catch unreachable;
+    std.os.emscripten.emscripten_set_main_loop(logic.frame, target_fps, 0);
 }
 
 pub fn native_main() !void {
@@ -27,14 +30,10 @@ pub fn native_main() !void {
     defer raylib.closeWindow();
     raylib.setTargetFPS(target_fps);
 
-    while (raylib.windowShouldClose() == false) {
-        frame();
-    }
-}
+    logic.init() catch unreachable;
+    defer logic.deinit() catch unreachable;
 
-fn frame() callconv(.c) void {
-    raylib.beginDrawing();
-    raylib.clearBackground(.black);
-    raylib.drawText("Raylib Game!", 32, 32, 32, .white);
-    raylib.endDrawing();
+    while (raylib.windowShouldClose() == false) {
+        logic.frame();
+    }
 }

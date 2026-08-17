@@ -1,4 +1,5 @@
 const zflecs = @import("zflecs");
+const raylib = @import("raylib");
 const components = @import("../components.zig");
 
 const std = @import("std");
@@ -20,9 +21,11 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
 
     var builder_iter = zflecs.query_iter(iter.world, queries.builder_query);
     while (zflecs.query_next(&builder_iter) == true) {
+        const builder = zflecs.field(&builder_iter, components.BridgeBuilder, 0) orelse continue;
         const tile_position = zflecs.field(&builder_iter, components.TilePosition, 1) orelse continue;
         for (0..builder_iter.count()) |builder_entity_index| {
             var skipBuild = false;
+            const b = builder[builder_entity_index];
             var bridge_iter = zflecs.query_iter(iter.world, queries.bridge_query);
             while (zflecs.query_next(&bridge_iter) == true) {
                 const bridge_tile_position = zflecs.field(&bridge_iter, components.TilePosition, 1) orelse continue;
@@ -35,25 +38,31 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
                     if (builder_x == bridge_x and builder_y == bridge_y) {
                         skipBuild = true;
                     }
-                    std.debug.print("builder = {} , bridge = {}\n", .{
-                        builder_entity_index,
-                        bridge_entity_index,
-                    });
                 }
             }
 
             const entity = builder_iter.entities()[builder_entity_index];
             zflecs.delete(iter.world, entity);
             const p: components.Position = .{
-                .x = @floatFromInt(tile_position[builder_entity_index].x * 32),
-                .y = @floatFromInt(tile_position[builder_entity_index].y * 32),
+                .x = @floatFromInt(tile_position[builder_entity_index].x * 64),
+                .y = @floatFromInt(tile_position[builder_entity_index].y * 64),
             };
             if (skipBuild == false) {
-                addBridge(
-                    iter.world,
-                    p,
-                    tile_position[builder_entity_index],
-                );
+                var economy = zflecs.singleton_get_mut(iter.world, components.Economy) orelse continue;
+                economy.build = economy.build - 1;
+                if (b.bulidThing == .Bridge) {
+                    addBridge(
+                        iter.world,
+                        p,
+                        tile_position[builder_entity_index],
+                    );
+                } else if (b.bulidThing == .Tower) {
+                    addTower(
+                        iter.world,
+                        p,
+                        tile_position[builder_entity_index],
+                    );
+                }
             }
         }
     }
@@ -65,6 +74,33 @@ fn addBridge(world: *zflecs.world_t, position: components.Position, tilePosition
     zflecs.add(world, entity, components.Renderable);
     _ = zflecs.set(world, entity, components.Position, position);
     _ = zflecs.set(world, entity, components.TilePosition, tilePosition);
+}
+
+fn addTower(world: *zflecs.world_t, position: components.Position, tilePosition: components.TilePosition) void {
+    const entity = zflecs.new_entity(world, "");
+    const texture_manager = zflecs.singleton_get(world, components.TextureManager) orelse return;
+    zflecs.add(world, entity, components.Tower);
+    zflecs.add(world, entity, components.Renderable);
+    _ = zflecs.set(world, entity, components.Position, position);
+    _ = zflecs.set(world, entity, components.TilePosition, tilePosition);
+    _ = zflecs.set(world, entity, components.Target, components.Target{
+        .position = .{
+            .x = 0.0,
+            .y = 0.0,
+        },
+        .current_time = 0.0,
+        .max_time = 0.4,
+    });
+    _ = zflecs.set(world, entity, components.Timer, components.Timer{
+        .current_time = 0.0,
+        .max_time = 2.0,
+    });
+    _ = zflecs.set(
+        world,
+        entity,
+        components.Texture,
+        texture_manager.data.get(.Tower) orelse unreachable,
+    );
 }
 
 pub fn init(world: *zflecs.world_t) void {
@@ -84,9 +120,7 @@ pub fn init(world: *zflecs.world_t) void {
     ) catch unreachable;
 
     // UNCOMMENT THIS LINE TO FIX
-    // builder_query.cache_kind = .QueryCacheDefault;
-
-    std.debug.print("{} \n", .{builder_query});
+    builder_query.cache_kind = .QueryCacheDefault;
 
     var bridge_query_description: zflecs.query_desc_t = .{
         .cache_kind = .QueryCacheNone,
@@ -101,8 +135,6 @@ pub fn init(world: *zflecs.world_t) void {
         world,
         &bridge_query_description,
     ) catch unreachable;
-
-    std.debug.print("{} \n", .{bridge_query});
 
     const entity = zflecs.entity_init(
         world,

@@ -13,11 +13,11 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
     const mouse_screen = raylib.getMousePosition();
     const mouse_world = raylib.getScreenToWorld2D(mouse_screen, camera.*);
 
-    const tile_x = std.math.divFloor(f32, mouse_world.x, 32.0) catch unreachable;
-    const tile_y = std.math.divFloor(f32, mouse_world.y, 32.0) catch unreachable;
+    const tile_x = std.math.divFloor(f32, mouse_world.x, 64.0) catch unreachable;
+    const tile_y = std.math.divFloor(f32, mouse_world.y, 64.0) catch unreachable;
 
-    const world_x = tile_x * 32.0;
-    const world_y = tile_y * 32.0;
+    const world_x = tile_x * 64.0;
+    const world_y = tile_y * 64.0;
 
     while (zflecs.query_next(&query_iter) == true) {
         const position = zflecs.field(&query_iter, components.Position, 0) orelse continue;
@@ -32,7 +32,19 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
     }
 
     if (raylib.isMouseButtonPressed(.left)) {
-        addBridge(
+        addBridgeBuilder(
+            iter.world,
+            components.Position{
+                .x = world_x,
+                .y = world_y,
+            },
+            components.TilePosition{
+                .x = @intFromFloat(tile_x),
+                .y = @intFromFloat(tile_y),
+            },
+        );
+    } else if (raylib.isMouseButtonPressed(.right)) {
+        addTowerBuilder(
             iter.world,
             components.Position{
                 .x = world_x,
@@ -46,12 +58,24 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
     }
 }
 
-fn addBridge(world: *zflecs.world_t, position: components.Position, tilePosition: components.TilePosition) void {
+fn addBridgeBuilder(world: *zflecs.world_t, position: components.Position, tilePosition: components.TilePosition) void {
     const entity = zflecs.new_entity(world, "");
-    zflecs.add(world, entity, components.BridgeBuilder);
     zflecs.add(world, entity, components.Renderable);
     _ = zflecs.set(world, entity, components.Position, position);
     _ = zflecs.set(world, entity, components.TilePosition, tilePosition);
+    _ = zflecs.set(world, entity, components.BridgeBuilder, components.BridgeBuilder{
+        .bulidThing = .Bridge,
+    });
+}
+
+fn addTowerBuilder(world: *zflecs.world_t, position: components.Position, tilePosition: components.TilePosition) void {
+    const entity = zflecs.new_entity(world, "");
+    zflecs.add(world, entity, components.Renderable);
+    _ = zflecs.set(world, entity, components.Position, position);
+    _ = zflecs.set(world, entity, components.TilePosition, tilePosition);
+    _ = zflecs.set(world, entity, components.BridgeBuilder, components.BridgeBuilder{
+        .bulidThing = .Tower,
+    });
 }
 
 fn addTileSelector(world: *zflecs.world_t) void {

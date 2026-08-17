@@ -1,6 +1,7 @@
 const std = @import("std");
 const raylib = @import("raylib");
 const ecs = @import("ecs/ecs.zig");
+const textures = @import("textures.zig");
 
 const tile_size = 64;
 const camera_speed = tile_size * 8;

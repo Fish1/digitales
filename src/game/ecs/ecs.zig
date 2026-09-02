@@ -17,12 +17,13 @@ const directionMovement = @import("systems/direction_movement.zig");
 const bulletEnemyCollision = @import("systems/bullet_enemy_collision.zig");
 const removeNoHealth = @import("systems/remove_no_health.zig");
 const removeNoHealthEnemies = @import("systems/remove_no_health_enemies.zig");
+const updateAnimations = @import("systems/update_animations.zig");
 
 const testing = @import("systems/testing.zig");
 
 pub const World = *zflecs.world_t;
 
-pub fn initWorld() *zflecs.world_t {
+pub fn initWorld(allocator: *const std.mem.Allocator) *zflecs.world_t {
     const world = zflecs.init();
     zflecs.COMPONENT(world, components.Position);
     zflecs.COMPONENT(world, components.Camera2D);
@@ -35,6 +36,7 @@ pub fn initWorld() *zflecs.world_t {
     zflecs.COMPONENT(world, components.DirectionMovement);
     zflecs.COMPONENT(world, components.Health);
     zflecs.COMPONENT(world, components.Economy);
+    zflecs.COMPONENT(world, components.Animation);
 
     zflecs.TAG(world, components.Renderable);
     zflecs.TAG(world, components.TileSelector);
@@ -45,7 +47,7 @@ pub fn initWorld() *zflecs.world_t {
     zflecs.TAG(world, components.Bullet);
 
     tileSelector.init(world);
-    bridgeBuilder.init(world);
+    bridgeBuilder.init(world, allocator) catch unreachable;
     enemySpawner.init(world);
     towerTargeter.init(world);
     towerShooter.init(world);
@@ -53,11 +55,12 @@ pub fn initWorld() *zflecs.world_t {
     bulletEnemyCollision.init(world);
     removeNoHealth.init(world);
     removeNoHealthEnemies.init(world);
+    updateAnimations.init(world);
     // testing.init(world);
 
     enemy.init(world);
     input.init(world);
-    draw.init(world);
+    draw.init(world, allocator) catch unreachable;
 
     initEconomy(world);
     initCamera(world);
@@ -129,7 +132,7 @@ fn initEconomy(world: *zflecs.world_t) void {
         world,
         components.Economy,
         components.Economy{
-            .build = 0,
+            .build = 15,
         },
     );
 }

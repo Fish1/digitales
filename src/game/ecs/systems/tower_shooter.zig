@@ -30,6 +30,7 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
 
 fn createBullet(world: *zflecs.world_t, position: components.Position, directionMovement: components.DirectionMovement) void {
     const entity = zflecs.new_entity(world, "");
+    const textureManager = zflecs.singleton_get(world, components.TextureManager) orelse return;
     zflecs.add(world, entity, components.Bullet);
     zflecs.add(world, entity, components.Renderable);
     _ = zflecs.set(world, entity, components.Position, position);
@@ -38,6 +39,7 @@ fn createBullet(world: *zflecs.world_t, position: components.Position, direction
         .max = 1,
         .current = 1,
     });
+    _ = zflecs.set(world, entity, components.Texture, textureManager.getTexture(.Bullet));
 }
 
 pub fn init(world: *zflecs.world_t) void {

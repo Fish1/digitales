@@ -16,21 +16,29 @@ pub const main = if (is_web) web_main else native_main;
 const screen_width = 800;
 const screen_height = 450;
 const target_fps = 60;
-const title = "Raylib Game!";
+const title = "Digitales";
 
 pub fn web_main() !void {
+    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
     raylib.initWindow(screen_width, screen_height, title);
-    logic.init() catch unreachable;
+    logic.init(&allocator) catch unreachable;
     defer logic.deinit() catch unreachable;
     std.os.emscripten.emscripten_set_main_loop(logic.frame, target_fps, 0);
 }
 
 pub fn native_main() !void {
+    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
     raylib.initWindow(screen_width, screen_height, "Raylib Game!");
     defer raylib.closeWindow();
     raylib.setTargetFPS(target_fps);
 
-    logic.init() catch unreachable;
+    logic.init(&allocator) catch unreachable;
     defer logic.deinit() catch unreachable;
 
     while (raylib.windowShouldClose() == false) {

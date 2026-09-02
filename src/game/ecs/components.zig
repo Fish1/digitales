@@ -1,5 +1,6 @@
 const raylib = @import("raylib");
-const textures = @import("../textures.zig");
+const texture = @import("../managers/texture.zig");
+const animation = @import("../managers/animation.zig");
 
 // ** TAGS **
 pub const Renderable = struct {};
@@ -9,6 +10,10 @@ pub const Enemy = struct {};
 pub const EnemySpawner = struct {};
 pub const Tower = struct {};
 pub const Bullet = struct {};
+
+pub const DrawLayer1 = struct {};
+pub const DrawLayer2 = struct {};
+pub const DrawLayer3 = struct {};
 
 // ** COMPONENTS **
 pub const Economy = struct {
@@ -23,8 +28,10 @@ pub const Timer = struct {
     max_time: f32,
     current_time: f32,
 };
+
 pub const Texture = raylib.Texture2D;
-pub const TextureManager = textures.TextureManager;
+pub const TextureManager = texture.TextureManager;
+pub const Animation = animation.Animation;
 
 const BuildThing = enum {
     Bridge,
@@ -32,6 +39,8 @@ const BuildThing = enum {
 };
 pub const BridgeBuilder = struct {
     bulidThing: BuildThing,
+    max_time: f32,
+    current_time: f32,
 };
 
 pub const Position = raylib.Vector2;

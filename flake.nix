@@ -65,7 +65,7 @@
           #   											mkdir -p $out/bin
           #  											cp ./zig-out/bin/raylib $out/bin
           #  										'';
-          # depsHash = "sha256-3vxgOZT4XYckGYd9jJC6zF2odptDlCUg/UQ5AeSNesA=";
+          depsHash = "sha256-3vxgOZT4XYckGYd9jJC6zF2odptDlCUg/UQ5AeSNesA=";
         };
       };
 

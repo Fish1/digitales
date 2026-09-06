@@ -3,12 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    zigflake.url = "github:silversquirl/zig-flake/compat";
-    zlsflake.url = "github:zigtools/zls";
-
-    zigflake.inputs.nixpkgs.follows = "nixpkgs";
-    zlsflake.inputs.nixpkgs.follows = "nixpkgs";
-    zlsflake.inputs.zig-overlay.follows = "zigflake";
+    zigflake = {
+      url = "github:silversquirl/zig-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -16,12 +14,11 @@
       self,
       nixpkgs,
       zigflake,
-      zlsflake,
     }:
     let
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      zig = zigflake.packages.x86_64-linux."0.16.0";
-      # zls = zlsflake.packages.x86_64-linux.zls;
+      zig = zigflake.packages.x86_64-linux.zig_0_16_0;
+      zls = zigflake.packages.x86_64-linux.zig_0_16_0.zls;
 
       defaultFhsEnvArgs = pkgs.appimageTools.defaultFhsEnvArgs;
 
@@ -48,23 +45,15 @@
           version = "0.1.0";
           src = ./.;
           nativeBuildInputs = [
-            fhs
+            # fhs
             zig
-            pkgs.zls
+            # zls
             pkgs.libGL
             pkgs.wayland-scanner
             pkgs.wayland
             pkgs.libxkbcommon
           ];
           zigReleaseMode = "fast";
-          # buildPhase = ''
-          #  						export ZIG_GLOBAL_CACHE_DIR=$out
-          #  						zigBuildPhase()
-          #  					'';
-          # installPhase = ''
-          #   											mkdir -p $out/bin
-          #  											cp ./zig-out/bin/raylib $out/bin
-          #  										'';
           depsHash = "sha256-3vxgOZT4XYckGYd9jJC6zF2odptDlCUg/UQ5AeSNesA=";
         };
       };
@@ -77,7 +66,7 @@
           packages = [
             fhs
             zig
-            pkgs.zls
+            zls
             pkgs.libGL
             pkgs.wayland-scanner
             pkgs.wayland

@@ -4,7 +4,8 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     zigflake = {
-      url = "github:silversquirl/zig-flake";
+      # url = "github:silversquirl/zig-flake";
+      url = "path:/home/jacob/Projects/zig-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

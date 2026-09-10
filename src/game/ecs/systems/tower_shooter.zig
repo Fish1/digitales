@@ -1,36 +1,29 @@
 const zflecs = @import("zflecs");
 const raylib = @import("raylib");
 const components = @import("../components.zig");
-const std = @import("std");
 
-fn system(iter: *zflecs.iter_t) callconv(.c) void {
-    var query_iter = zflecs.query_iter(iter.world, iter.query);
+fn system(iter: *zflecs.iter_t, positions: []const components.Position, targets: []components.Target) void {
+    const texture_manager = zflecs.singleton_get(iter.world, components.TextureManager) orelse return;
+    const bullet_texture = texture_manager.getTexture(.Bullet);
+    const dt = raylib.getFrameTime();
 
-    while (zflecs.query_next(&query_iter) == true) {
-        const position_field = zflecs.field(&query_iter, components.Position, 1) orelse continue;
-        const target_field = zflecs.field(&query_iter, components.Target, 2) orelse continue;
-        for (0..query_iter.count()) |tower_index| {
-            const position = position_field[tower_index];
-            const target = target_field[tower_index];
-            if (target.current_time >= target.max_time) {
-                if (target.position) |target_position| {
-                    const direction = target_position.subtract(position);
-                    createBullet(iter.world, position, .{
-                        .direction = direction,
-                        .speed = 25.0,
-                    });
-                }
-                target_field[tower_index].current_time = 0.0;
-            } else {
-                target_field[tower_index].current_time += raylib.getFrameTime();
-            }
+    for (positions, targets) |position, *target| {
+        if (target.current_time < target.max_time) {
+            target.current_time += dt;
+            continue;
         }
+        target.current_time = 0.0;
+
+        const target_position = target.position orelse continue;
+        createBullet(iter.world, position, .{
+            .direction = target_position.subtract(position),
+            .speed = 25.0,
+        }, bullet_texture);
     }
 }
 
-fn createBullet(world: *zflecs.world_t, position: components.Position, directionMovement: components.DirectionMovement) void {
+fn createBullet(world: *zflecs.world_t, position: components.Position, directionMovement: components.DirectionMovement, texture: components.Texture) void {
     const entity = zflecs.new_entity(world, "");
-    const textureManager = zflecs.singleton_get(world, components.TextureManager) orelse return;
     zflecs.add(world, entity, components.Bullet);
     zflecs.add(world, entity, components.Renderable);
     _ = zflecs.set(world, entity, components.Position, position);
@@ -39,33 +32,17 @@ fn createBullet(world: *zflecs.world_t, position: components.Position, direction
         .max = 1,
         .current = 1,
     });
-    _ = zflecs.set(world, entity, components.Texture, textureManager.getTexture(.Bullet));
+    _ = zflecs.set(world, entity, components.Texture, texture);
 }
 
 pub fn init(world: *zflecs.world_t) void {
-    var query_description: zflecs.query_desc_t = .{};
-    query_description.terms[0] = zflecs.term_t{
-        .id = zflecs.id(components.Tower),
-    };
-    query_description.terms[1] = zflecs.term_t{
-        .id = zflecs.id(components.Position),
-    };
-    query_description.terms[2] = zflecs.term_t{
-        .id = zflecs.id(components.Target),
-    };
-
-    const entity = zflecs.entity_init(world, &zflecs.entity_desc_t{
-        .name = "tower_shooter",
-        .add = &.{
-            zflecs.pair(zflecs.DependsOn, zflecs.OnUpdate),
+    _ = zflecs.ADD_SYSTEM_WITH_FILTERS(
+        world,
+        "tower_shooter",
+        zflecs.OnUpdate,
+        system,
+        &.{
+            .{ .id = zflecs.id(components.Tower) },
         },
-    });
-
-    const system_description: zflecs.system_desc_t = .{
-        .callback = system,
-        .entity = entity,
-        .query = query_description,
-    };
-
-    _ = zflecs.system_init(world, &system_description);
+    );
 }

@@ -4,43 +4,33 @@ const components = @import("../components.zig");
 const std = @import("std");
 
 fn system(iter: *zflecs.iter_t) callconv(.c) void {
-    var query_iter = zflecs.query_iter(iter.world, iter.query);
-
     const enemy_query: *zflecs.query_t = @ptrCast(@alignCast(iter.ctx));
 
-    while (zflecs.query_next(&query_iter) == true) {
-        const tower_position_field = zflecs.field(&query_iter, components.Position, 1) orelse continue;
-        const tower_target_position_field = zflecs.field(&query_iter, components.Target, 2) orelse continue;
+    const positions = zflecs.field(iter, components.Position, 1) orelse return;
+    var targets = zflecs.field(iter, components.Target, 2) orelse return;
 
-        for (0..query_iter.count()) |tower_index| {
-            const tower_position = tower_position_field[tower_index];
-            // var tower_target_position = tower_target_position_field[tower_index];
+    for (positions[0..iter.count()], targets[0..iter.count()], 0..) |tower_position, _, index| {
+        var enemy_iter = zflecs.query_iter(iter.world, enemy_query);
+        var enemy_positions = zflecs.field(&enemy_iter, components.Position, 1) orelse return;
 
-            var close_position: ?components.Position = null;
-            var close_distance: ?f32 = null;
+        var close_position: ?components.Position = null;
+        var close_distance: ?f32 = null;
 
-            var enemy_query_iter = zflecs.query_iter(iter.world, enemy_query);
-            while (zflecs.query_next(&enemy_query_iter) == true) {
-                const enemy_position_field = zflecs.field(&enemy_query_iter, components.Position, 1) orelse continue;
+        for (enemy_positions[0..enemy_iter.count()]) |enemy_position| {
+            const distance = tower_position.distanceSqr(enemy_position);
 
-                for (0..enemy_query_iter.count()) |enemy_index| {
-                    const enemy_position = enemy_position_field[enemy_index];
-                    const distance = tower_position.distanceSqr(enemy_position);
-
-                    if (close_distance) |cd| {
-                        if (distance <= cd) {
-                            close_position = enemy_position;
-                            close_distance = distance;
-                        }
-                    } else {
-                        close_position = enemy_position;
-                        close_distance = distance;
-                    }
+            if (close_distance) |cd| {
+                if (distance <= cd) {
+                    close_position = enemy_position;
+                    close_distance = distance;
                 }
+            } else {
+                close_position = enemy_position;
+                close_distance = distance;
             }
-
-            tower_target_position_field[tower_index].position = close_position;
         }
+
+        targets[index].position = close_position;
     }
 }
 

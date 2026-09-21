@@ -44,6 +44,8 @@ fn system(iter: *zflecs.iter_t) callconv(.c) void {
     }
 }
 
+fn system2(iter: *zflecs.iter_t, positions: []components.Position, targets: []components.Target) void {}
+
 pub fn init(world: *zflecs.world_t) void {
     var query_description: zflecs.query_desc_t = .{};
     query_description.terms[0] = zflecs.term_t{
@@ -81,4 +83,16 @@ pub fn init(world: *zflecs.world_t) void {
     };
 
     _ = zflecs.system_init(world, &system_description);
+
+    const a = zflecs.ADD_SYSTEM_WITH_FILTERS(
+        world,
+        "tower targeter",
+        zflecs.OnUpdate,
+        system2,
+        &.{
+            zflecs.term_t{
+                .id = zflecs.id(components.Tower),
+            },
+        },
+    );
 }
